@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>AI Graphic Generator</title>
+  <style>
+   body {
+  background: #0f0f0f;
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.hero-text { color: #ffffff; font-size: 32px; font-weight: 600; margin-bottom: 20px; text-align: center; }
+.input-wrapper { display: flex; align-items: center; background: #1e1e1e; border-radius: 30px; padding: 10px 12px; width: 500px; border: 1px solid #333; }
+textarea { flex: 1; border: none; outline: none; resize: none; background: transparent; color: white; font-size: 16px; padding: 10px; max-height: 150px; overflow-y: auto; }
+button { background: #10a37f; border: none; color: white; font-size: 18px; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; }
+button:hover { background: #0d8a6a; }
+
+#results { margin-top: 20px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+#results img { max-width:320px; border-radius:8px; border:1px solid #333; }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h1 class="hero-text">WELCOME TO AIGRAPHICS</h1>
+    <div class="input-wrapper">
+      <textarea id="prompt" placeholder="Describe your design..." rows="1"></textarea>
+      <button onclick="sendPrompt()">➤</button>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <script>
+  async function sendPrompt() {
+    const textarea = document.getElementById("prompt");
+    const value = textarea.value.trim();
+    if (!value) return alert('Enter a prompt');
+
+    let res;
+    try {
+      res = await fetch("http://127.0.0.1:7860/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: value })
+      });
+    } catch (err) {
+      return alert('Request failed: ' + err.message);
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      return alert('Invalid server response');
+    }
+
+    // If server returned an error detail (FastAPI uses "detail")
+    if (!res.ok) {
+      alert(data.detail || data.error || 'Server error');
+      return;
+    }
+
+    if (!data.image) {
+      alert("No image returned from server.");
+      return;
+    }
+
+    const img = document.createElement("img");
+    img.src = data.image;
+    document.getElementById('results').appendChild(img);
+
+    textarea.value = "";
+  }
+  </script>
+</body>
+</html>
